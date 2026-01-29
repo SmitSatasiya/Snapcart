@@ -56,6 +56,7 @@ function Login() {
         Login To Snapcart today <Leaf className="w-5 h-5 text-green-600" />
       </p>
       <motion.form
+        onSubmit={handleLogin}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6 }}

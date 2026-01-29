@@ -5,6 +5,9 @@ import { auth } from "../auth";
 import { redirect } from "next/navigation";
 import EditRoleMobile from "./componentes/EditRoleMobile";
 import Nav from "./componentes/Nav";
+import UserDashboard from "./componentes/UserDashboard";
+import AdminDashboard from "./componentes/AdminDashboard";
+import DeliveryBoy from "./componentes/DeliveryBoy";
 
 async function Home() {
   await connectDb();
@@ -24,6 +27,13 @@ async function Home() {
   return (
     <>
       <Nav user={plainUser} />
+      {user.role == "user" ? (
+        <UserDashboard />
+      ) : user.role == "admin" ? (
+        <AdminDashboard />
+      ) : (
+        <DeliveryBoy />
+      )}
     </>
   );
 }
