@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       price,
       category,
       unit,
-      imag: imageUrl,
+      image: imageUrl,
     });
     return NextResponse.json(grocery, { status: 200 });
   } catch (error) {
