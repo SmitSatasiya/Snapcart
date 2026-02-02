@@ -13,13 +13,11 @@ interface IUser {
 
 interface IUserSlice {
     userData: IUser | null;
-    Smit:null
 }
 
 const initialState: IUserSlice = {
     userData: null,
-    Smit:null
-};
+ };
 
 const userSlice = createSlice({
   name: "user",
