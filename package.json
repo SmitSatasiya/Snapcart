@@ -10,10 +10,13 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.11.2",
+    "@types/leaflet": "^1.9.21",
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.9.0",
+    "leaflet": "^1.9.4",
+    "leaflet-geosearch": "^4.2.2",
     "lucide-react": "^0.563.0",
     "mongoose": "^9.1.5",
     "mongoose-bcrypt": "^1.11.0",
@@ -22,6 +25,7 @@
     "next-auth": "^5.0.0-beta.30",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-leaflet": "^5.0.0",
     "react-redux": "^9.2.0"
   },
   "devDependencies": {

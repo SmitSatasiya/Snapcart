@@ -1,23 +1,138 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { ArrowLeft, MapPin, User } from "lucide-react";
+import {
+  ArrowLeft,
+  Building,
+  Home,
+  Loader2,
+  LocateFixed,
+  MapPin,
+  Navigation,
+  Phone,
+  Search,
+  User,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/src/redux/store";
+import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
+import L, { LatLngExpression } from "leaflet";
+import "leaflet/dist/leaflet.css";
+import axios from "axios";
+import { OpenStreetMapProvider } from "leaflet-geosearch";
 
+const markerIcon = new L.Icon({
+  iconUrl: "https://cdn-icons-png.flaticon.com/128/684/684908.png",
+  iconSize: [40, 40],
+  iconAnchor: [20, 40],
+});
 function Checkout() {
-    const router = useRouter();
-    const { userData } = useSelector((state:RootState) => state.user)
-    const [address, setAddress] = useState({
-        fullName: userData?.name,
-        mobile: userData?.mobile,
-        city: "",
-        state: "",
-        pincode: "",
-        fullAddress: ""
-    })
-    
+  const router = useRouter();
+  const { userData } = useSelector((state: RootState) => state.user);
+  const [address, setAddress] = useState({
+    fullName: userData?.name ?? "",
+    mobile: userData?.mobile ?? "",
+    city: "",
+    state: "",
+    pincode: "",
+    fullAddress: "",
+  });
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("");
+  const [position, setPosition] = useState<[number, number] | null>(null);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          setPosition([latitude, longitude]);
+        },
+        (err) => {
+          console.log("location error", err);
+        },
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 },
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    if (userData) {
+      setAddress((prev) => ({ ...prev, fullName: userData?.name || "" }));
+      setAddress((prev) => ({ ...prev, mobile: userData?.mobile || "" }));
+    }
+  }, [userData]);
+
+  const DraggableMarker: React.FC = () => {
+    const map = useMap();
+    useEffect(() => {
+      map.setView(position as LatLngExpression, 15, { animate: true });
+    }, [position, map]);
+
+    return (
+      <Marker
+        icon={markerIcon}
+        position={position as LatLngExpression}
+        draggable={true}
+        eventHandlers={{
+          dragend: (e: L.LeafletEvent) => {
+            const marker = e.target as L.Marker;
+            const { lat, lng } = marker.getLatLng();
+            setPosition([lat, lng]);
+          },
+        }}
+      />
+    );
+  };
+
+  const handleSearchQuery = async () => {
+    setSearchLoading(true)
+    const provider = new OpenStreetMapProvider();
+    const results = await provider.search({ query: searchQuery });
+    if (results) {
+      setSearchLoading(false)
+      setPosition([results[0].y, results[0].x]);
+    }
+  };
+
+  useEffect(() => {
+    const fetchAddress = async () => {
+      if (!position) return;
+      try {
+        const result = await axios.get(
+          `https://nominatim.openstreetmap.org/reverse?lat=${position[0]}&lon=${position[1]}&format=json`,
+        );
+        console.log(result.data);
+        setAddress((prev) => ({
+          ...prev,
+          city: result.data.address.state_district,
+          state: result.data.address.state,
+          pincode: result.data.address.postcode,
+          fullAddress: result.data.display_name,
+        }));
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchAddress();
+  }, [position]);
+
+  const handleCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          setPosition([latitude, longitude]);
+        },
+        (err) => {
+          console.log("location error", err);
+        },
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 },
+      );
+    }
+  }
+
   return (
     <div className="w-[92%] md:w-[80%] mx-auto py-10 relative">
       <motion.button
@@ -56,7 +171,149 @@ function Checkout() {
                 className="absolute left-3 top-3 text-green-600"
                 size={18}
               />
-              <input type="text" placeholder="Full Name" />
+              <input
+                type="text"
+                aria-label="Full name"
+                value={address.fullName}
+                onChange={(e) =>
+                  setAddress((prev) => ({
+                    ...prev,
+                    fullName: e.target.value,
+                  }))
+                }
+                className="pl-10 w-full border rounded-lg p-3 text-sm bg-gray-50"
+              />
+            </div>
+            <div className="relative">
+              <Phone
+                className="absolute left-3 top-3 text-green-600"
+                size={18}
+              />
+              <input
+                type="text"
+                aria-label="mobile"
+                value={address.mobile}
+                onChange={(e) =>
+                  setAddress((prev) => ({
+                    ...prev,
+                    mobile: e.target.value,
+                  }))
+                }
+                className="pl-10 w-full border rounded-lg p-3 text-sm bg-gray-50"
+              />
+            </div>
+            <div className="relative">
+              <Home
+                className="absolute left-3 top-3 text-green-600"
+                size={18}
+              />
+              <input
+                type="text"
+                value={address.fullAddress}
+                onChange={(e) =>
+                  setAddress((prev) => ({
+                    ...prev,
+                    fullAddress: e.target.value,
+                  }))
+                }
+                className="pl-10 w-full border rounded-lg p-3 text-sm bg-gray-50"
+                placeholder="Full address"
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="relative">
+                <Building
+                  className="absolute left-3 top-3 text-green-600"
+                  size={18}
+                />
+                <input
+                  type="text"
+                  value={address.city}
+                  onChange={(e) =>
+                    setAddress((prev) => ({
+                      ...prev,
+                      city: e.target.value,
+                    }))
+                  }
+                  className="pl-10 w-full border rounded-lg p-3 text-sm bg-gray-50"
+                  placeholder="City"
+                />
+              </div>
+              <div className="relative">
+                <Navigation
+                  className="absolute left-3 top-3 text-green-600"
+                  size={18}
+                />
+                <input
+                  type="text"
+                  value={address.state}
+                  onChange={(e) =>
+                    setAddress((prev) => ({
+                      ...prev,
+                      state: address.state,
+                    }))
+                  }
+                  className="pl-10 w-full border rounded-lg p-3 text-sm bg-gray-50"
+                  placeholder="State"
+                />
+              </div>
+              <div className="relative">
+                <Search
+                  className="absolute left-3 top-3 text-green-600"
+                  size={18}
+                />
+                <input
+                  type="text"
+                  value={address.pincode}
+                  onChange={(e) =>
+                    setAddress((prev) => ({
+                      ...prev,
+                      pincode: address.pincode,
+                    }))
+                  }
+                  className="pl-10 w-full border rounded-lg p-3 text-sm bg-gray-50"
+                  placeholder="Pincode"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 mt-3">
+              <input
+                type="text"
+                placeholder="search city or area..."
+                className="flex-1 border rounded-lg p-3 text-sm focus:ring-green-500 outline-none"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <button
+                className="bg-green-600 text-white px-5 rounded-lg hover:bg-green-700 transition-all font-medium"
+                onClick={handleSearchQuery}
+              >
+                {searchLoading ? <Loader2 className="animate-spin" size={16}/> : "Search"}
+              </button>
+            </div>
+
+            <div className="relative mt-6 h-[330px] rounded-xl overflow-hidden border border-gray-200 shadow-inner">
+              {position && (
+                <MapContainer
+                  center={position as LatLngExpression}
+                  zoom={13}
+                  scrollWheelZoom={false}
+                  className="w-full h-full"
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+
+                  <DraggableMarker />
+                </MapContainer>
+              )}
+              <motion.button
+                className="absolute bottom-4 right-4 bg-green-600 text-white shadow-lg rounded-full p-3 hover:bg-green-700 transition-all flex items-center justify-center z-999"
+                whileTap={{ scale: 0.93 }}
+              >
+                <LocateFixed size={22} />
+              </motion.button>
             </div>
           </div>
         </motion.div>

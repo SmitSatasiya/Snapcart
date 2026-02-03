@@ -31,7 +31,7 @@ function CartPage() {
       <motion.h2
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.3 }}  
         className="text-2xl sm:text-3xl md:text-4xl font-bold text-green-700 text-center mb-10"
       >
         🛒 Your Shopping Cart
