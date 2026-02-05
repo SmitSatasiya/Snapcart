@@ -33,7 +33,7 @@ const markerIcon = new L.Icon({
 function Checkout() {
   const router = useRouter();
   const { userData } = useSelector((state: RootState) => state.user);
-  const { subTotal, deliveryFee, finalTotal } = useSelector(
+  const { subTotal, deliveryFee, finalTotal, cartData } = useSelector(
     (state: RootState) => state.cart,
   );
   const [address, setAddress] = useState({
@@ -124,6 +124,75 @@ function Checkout() {
     };
     fetchAddress();
   }, [position]);
+
+  const handleCod = async () => {
+    if (!position) {
+      return null;
+    }
+    try {
+      const result = await axios.post("/api/user/order", {
+        userId: userData?._id,
+        items: cartData.map((item) => ({
+          grocery: item._id,
+          name: item.name,
+          price: item.price,
+          unit: item.unit,
+          quantity: item.quantity,
+          image: item.image,
+        })),
+        totalAmount: finalTotal,
+        address: {
+          fullName: address.fullName,
+          mobile: address.mobile,
+          city: address.state,
+          state: address.state,
+          fullAddress: address.fullAddress,
+          pincode: address.pincode,
+          latitude: position[0],
+          longitude: position[1],
+        },
+        paymentMethod,
+      });
+
+      router.push("/user/order-success");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleOnlinePayment = async () => {
+    if (!position) {
+      return null;
+    }
+    try {
+      const result = await axios.post("/api/user/payment", {
+        userId: userData?._id,
+        items: cartData.map((item) => ({
+          grocery: item._id,
+          name: item.name,
+          price: item.price,
+          unit: item.unit,
+          quantity: item.quantity,
+          image: item.image,
+        })),
+        totalAmount: finalTotal,
+        address: {
+          fullName: address.fullName,
+          mobile: address.mobile,
+          city: address.state,
+          state: address.state,
+          fullAddress: address.fullAddress,
+          pincode: address.pincode,
+          latitude: position[0],
+          longitude: position[1],
+        },
+        paymentMethod,
+      });
+      window.location.href = result.data.url
+    } catch (error) {
+      console.log(error)
+    }
+  };
 
   const handleCurrentLocation = () => {
     if (navigator.geolocation) {
@@ -348,10 +417,9 @@ function Checkout() {
                   : "hover: bg-gray-50"
               }`}
             >
-              <CreditCardIcon className="text-green-600" />{" "}
+              <CreditCardIcon className="text-green-600" />
               <span className="font-medium text-gray-700">
-                {" "}
-                Pay Online(stripe){" "}
+                Pay Online(stripe)
               </span>
             </button>
             <button
@@ -376,19 +444,31 @@ function Checkout() {
             </div>
             <div className="flex justify-between">
               <span>Deliver Fee</span>
-              <span className="font-semibold text-green-600">₹{deliveryFee}</span>
+              <span className="font-semibold text-green-600">
+                ₹{deliveryFee}
+              </span>
             </div>
             <div className="flex justify-between">
               <span>Final Total</span>
-              <span className="font-semibold text-green-600">₹{finalTotal}</span>
+              <span className="font-semibold text-green-600">
+                ₹{finalTotal}
+              </span>
             </div>
           </div>
 
           <motion.button
             whileTap={{ scale: 0.93 }}
             className="w-full mt-6 bg-green-600 text-white py-3 rounded-full hover:bg-green-700 transition-all font-semibold"
+            onClick={() => {
+              if (paymentMethod == "cod") {
+                handleCod();
+              } else {
+                null;
+                handleOnlinePayment();
+              }
+            }}
           >
-            {paymentMethod=="cod"?"Place Order":"Pay & Place Order"}
+            {paymentMethod == "cod" ? "Place Order" : "Pay & Place Order"}
           </motion.button>
         </motion.div>
       </div>

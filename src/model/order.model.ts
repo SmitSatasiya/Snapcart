@@ -13,7 +13,8 @@ interface IOrder {
       quantity: number;
     },
   ];
-  totalAmount: string;
+  isPaid: boolean;
+  totalAmount: number;
   paymentMethod: "cod" | "online";
   address: {
     fullName: string;
@@ -36,7 +37,7 @@ const orderSchema = new mongoose.Schema<IOrder>(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: "true",
+      required: true,
     },
     items: [
       {
@@ -58,6 +59,11 @@ const orderSchema = new mongoose.Schema<IOrder>(
       enum: ["cod", "online"],
       default: "cod",
     },
+    isPaid: {
+      type: Boolean,
+      default: false,
+    },
+    totalAmount: Number,
     address: {
       fullName: String,
       mobile: String,
@@ -68,6 +74,14 @@ const orderSchema = new mongoose.Schema<IOrder>(
       latitude: Number,
       longitude: Number,
     },
+    status: {
+      type: String,
+      enum: ["pending", "out of delivery", "delivered"],
+      default: "pending",
+    },
   },
   { timestamps: true },
 );
+
+const Order = mongoose.models.Order || mongoose.model("Order", orderSchema);
+export default Order;
