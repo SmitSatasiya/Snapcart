@@ -463,7 +463,6 @@ function Checkout() {
               if (paymentMethod == "cod") {
                 handleCod();
               } else {
-                null;
                 handleOnlinePayment();
               }
             }}
